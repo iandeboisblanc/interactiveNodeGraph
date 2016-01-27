@@ -20,13 +20,14 @@ function createNodesData() {
   for(var i = 0; i < settings.nodeCount; i++) {
     var nodeData = {
       position: {},
-      size: 0
+      radius: 0
     };
-    nodeData.position.x = random();
-    nodeData.position.y = random();
+    nodeData.position.x = floor(random() * 800);
+    nodeData.position.y = floor(random() * 500);
+    nodeData.radius = floor(random() * 20) + 5;
+    //radius based on number of junctions?
+    nodes.push(nodeData);
   }
-  //need size and position (maybe not in this function)
-    //size based on number of junctions?
 }
 
 function createJunctionsData() {
