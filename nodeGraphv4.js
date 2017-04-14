@@ -1,11 +1,20 @@
+/*******************
+TODO:
+- replace circles with groups (<g>) of 2 circles, so it can have a ring when selected
+- move settings into world istance
+- figure out how to handle only having ONE selected at a time (parent listener?)
+- add collisions
+- make vectors a class so they're easier to use correctly
+********************/
+
 // Global settings
 const settings = {
   timeStep: 1,
   springDamping: 0.99,
   fluidResistance: 0.005,
   defaultSpringConstant: 1,
-  width: window.innerWidth,
-  height: window.innerHeight,
+  width: window.innerWidth - 40,
+  height: window.innerHeight - 40,
 };
 
 // Helper Functions
@@ -25,18 +34,21 @@ function getDistance(mass1, mass2) {
 }
 
 // d3 Functions
-const drag = d3.behavior.drag()
-  .on('drag', (d) => {
+const drag = d3.drag()
+  .on('drag.drag', (d) => {
     d.beingDragged = true;
     const x = Math.min(Math.max(d3.event.x, d.mass), settings.width - d.mass);
-    const y = Math.min(Math.max(d3.event.y, d.mass), settings.height - d.mass);;
-    d.setXVelocity((x - d.position[0]) / settings.timeStep / 2.5);
-    d.setYVelocity((y - d.position[1]) / settings.timeStep / 2.5);
-    d.setXPosition(x);
-    d.setYPosition(y);
+    const y = Math.min(Math.max(d3.event.y, d.mass), settings.height - d.mass);
+    const velocity = [(x - d.position[0]) / settings.timeStep / 2.5, (y - d.position[1]) / settings.timeStep / 2.5];
+    d.setVelocity(velocity);
+    d.setPosition([x,y]);
   })
-  .on('dragend', (d) => {
-    d.beingDragged = false;
+  .on('end.drag', function(d) {
+    if (d.beingDragged) {
+      d.beingDragged = false;
+      return;
+    }
+    // can handle click (not drag) events here
   });
 
 function resize() {
@@ -58,20 +70,26 @@ class World {
   constructor(settings) {
     this.masses = [];
     this.springs = [];
+    /*
     this.settings = {
       timeStep: 1,
-      springDamping: 0.1,
-      fluidResistance: 0,
-      width: window.innerWidth,
-      height: window.innerHeight,
-      // ...settings
+      springDamping: 0.99,
+      fluidResistance: 0.05,
+      defaultSpringConstant: 1,
+      width: window.innerWidth - 40,
+      height: window.innerHeight - 40,
     };
+    */
+  }
+
+  setSettings(settings) {
+    Object.assign(this.settings, settings);
   }
 
   init() {
     this.createBoard();
-    this.createMasses(10);
-    this.createSprings(15);
+    this.createMasses(15);
+    this.createSprings(20);
     setInterval(this.update.bind(this),settings.stepTime)
   }
 
@@ -97,12 +115,33 @@ class World {
       .selectAll('circle')
       .data(this.masses, d => d.id)
       .enter()
+      .append('g')
+      .attr('class', 'mass');
+
+    d3.select('.board')
+      .selectAll('.mass')
+      .data(this.masses, d => d.id)
       .append('circle')
+      .attr('class', 'visible')
+      .attr('r', d => d.mass)
       .attr('cx', d => d.position[0])
       .attr('cy', d => d.position[1])
-      .attr('r', d => d.mass)
-      .call(drag);
+      .on('mouseover', function(d) {
+        d3.select(this).classed('hover', true)
+      })
+      .on('mouseout', function(d) {
+        d3.select(this).classed('hover', false)
+      })
+      .call(drag)
 
+    d3.select('.board')
+      .selectAll('.mass')
+      .data(this.masses, d => d.id)
+      .append('circle')
+      .attr('class', 'ring')
+      .attr('r', d => d.mass + 5)
+      .attr('cx', d => d.position[0])
+      .attr('cy', d => d.position[1])
   }
 
   createSprings(n) {
@@ -110,6 +149,10 @@ class World {
       const mass1 = randomProperty(this.masses);
       const mass2 = randomProperty(this.masses);
       if (mass1 === mass2) continue; // skip if same mass
+      if (this.springs.filter(spring => spring.id == `${mass1.id}-${mass2.id}`).length) {
+        // skip if spring already exists (switch to object keys?)
+        continue;
+      }
       const spring = new Spring(mass1, mass2);
       this.springs.push(spring);
     }
@@ -134,18 +177,24 @@ class World {
       .attr('x2', d => d.masses[1].position[0])
       .attr('y2', d => d.masses[1].position[1]);
 
-    d3.select('.board')
-      .selectAll('circle')
-      .data(this.masses, d => d.id)
+    const masses = d3.select('.board')
+      .selectAll('.mass')
+      .data(this.masses, d => d.id);
+
+    masses.select('.visible')
       .attr('cx', d => d.position[0])
       .attr('cy', d => d.position[1])
-      .attr('r', d => d.mass)
-      .moveToFront();
+      .attr('r', d => d.mass);
 
+    masses.select('.ring')
+      .attr('cx', d => d.position[0])
+      .attr('cy', d => d.position[1])
+      .attr('r', d => d.mass + 5);
+
+    masses.moveToFront();
   }
 
   update() {
-    // Apply spring forces
     this.springs.forEach(spring => spring.applyForces());
     this.masses.forEach(mass => mass.updatePosition());
     this.updateDom();
@@ -293,4 +342,3 @@ class Spring {
 
 let world = new World();
 world.init();
-let debug = false;
