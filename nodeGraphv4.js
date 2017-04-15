@@ -1,6 +1,5 @@
 /*******************
 TODO:
-- replace circles with groups (<g>) of 2 circles, so it can have a ring when selected
 - move settings into world istance
 - figure out how to handle only having ONE selected at a time (parent listener?)
 - add collisions
@@ -13,8 +12,8 @@ const settings = {
   springDamping: 0.99,
   fluidResistance: 0.005,
   defaultSpringConstant: 1,
-  width: window.innerWidth - 40,
-  height: window.innerHeight - 40,
+  width: window.innerWidth - 20,
+  height: window.innerHeight - 20,
 };
 
 // Helper Functions
@@ -35,7 +34,10 @@ function getDistance(mass1, mass2) {
 
 // d3 Functions
 const drag = d3.drag()
-  .on('drag.drag', (d) => {
+  .on('start.drag-behavior', function(d) {
+    d.selected = true;
+  })
+  .on('drag.drag-behavior', (d) => {
     d.beingDragged = true;
     const x = Math.min(Math.max(d3.event.x, d.mass), settings.width - d.mass);
     const y = Math.min(Math.max(d3.event.y, d.mass), settings.height - d.mass);
@@ -43,7 +45,8 @@ const drag = d3.drag()
     d.setVelocity(velocity);
     d.setPosition([x,y]);
   })
-  .on('end.drag', function(d) {
+  .on('end.drag-behavior', function(d) {
+    d.selected = false;
     if (d.beingDragged) {
       d.beingDragged = false;
       return;
@@ -52,8 +55,8 @@ const drag = d3.drag()
   });
 
 function resize() {
-  settings.width = window.innerWidth - 40;
-  settings.height = window.innerHeight - 40;
+  settings.width = window.innerWidth - 20;
+  settings.height = window.innerHeight - 20;
   d3.select('svg')
     .attr('width', settings.width)
     .attr('height', settings.height);
@@ -107,21 +110,18 @@ class World {
 
   createMasses(n) {
     for(let i = 0; i < n; i++) {
-      const mass = new Mass(Math.floor(Math.random() * 10 + 3), [Math.random() * 300, Math.random() * 300]);
+      const mass = new Mass(Math.floor(Math.random() * 20 + 3), [Math.random() * settings.width * 0.7, Math.random() * settings.height  * 0.7]);
       this.masses.push(mass);
     }
 
-    d3.select('.board')
+    const masses = d3.select('.board')
       .selectAll('circle')
       .data(this.masses, d => d.id)
       .enter()
       .append('g')
       .attr('class', 'mass');
 
-    d3.select('.board')
-      .selectAll('.mass')
-      .data(this.masses, d => d.id)
-      .append('circle')
+    masses.append('circle')
       .attr('class', 'visible')
       .attr('r', d => d.mass)
       .attr('cx', d => d.position[0])
@@ -132,12 +132,9 @@ class World {
       .on('mouseout', function(d) {
         d3.select(this).classed('hover', false)
       })
-      .call(drag)
+      .call(drag);
 
-    d3.select('.board')
-      .selectAll('.mass')
-      .data(this.masses, d => d.id)
-      .append('circle')
+    masses.append('circle')
       .attr('class', 'ring')
       .attr('r', d => d.mass + 5)
       .attr('cx', d => d.position[0])
@@ -209,6 +206,7 @@ class Mass {
     this.position = position; // [x,y]
     this.velocity = velocity; // [x,y]
     this.beingDragged = false;
+    this.selected = false;
   }
 
   // probably unnecessary

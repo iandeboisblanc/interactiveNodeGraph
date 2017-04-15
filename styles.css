@@ -1,13 +1,13 @@
 body {
   background-color: #454545;
   color: white;
+  margin: 5px;
 }
 
 .board {
   background-color: rgb(255,60,60);
   border: 5px solid black;
   border-radius: 10px;
-  margin-left: 10px;
   min-width: 100px;
   min-height: 100px;
 }
@@ -19,24 +19,10 @@ circle.visible {
   cursor: pointer;
 }
 
-/*circle.ring {
-  fill: none;
-  stroke: white;
-  stroke-width: 5px;
-}
-
-circle.ring.selected {
-  fill: none;
-  stroke: blue;
-  stroke-width: 5px;
-}*/
-
-circle.visible + .ring {
+circle.ring {
   fill: none;
   stroke: none;
   stroke-width: 5px;
-  pointer-events: none;
-  transition: 0.5s
 }
 
 circle.visible.hover + .ring, circle.visible.selected + .ring {
