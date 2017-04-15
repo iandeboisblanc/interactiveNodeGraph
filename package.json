@@ -1,0 +1,25 @@
+{
+  "name": "interactive-node-graph",
+  "version": "1.0.0",
+  "description": "",
+  "main": "nodeGraphv4.js",
+  "dependencies": {
+    "d3": "^4.7.4",
+    "forever": "^0.15.3",
+    "http-server": "^0.9.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iandeboisblanc/interactiveNodeGraph.git"
+  },
+  "author": "Ian deBoisblanc",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/iandeboisblanc/interactiveNodeGraph/issues"
+  },
+  "homepage": "https://github.com/iandeboisblanc/interactiveNodeGraph#readme"
+}
